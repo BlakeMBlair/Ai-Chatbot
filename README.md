@@ -45,33 +45,42 @@ The backend utilizes a relational MySQL database (`ai_chat_db`) to manage user s
 git clone https://github.com/BlakeMBlair/Ai-Chatbot.git
 cd Ai-Chatbot
 
-Bash
 git clone https://github.com/YourUsername/your-repo-name.git
 cd your-repo-name
-2. Configure the Virtual Environment
-This project requires Python 3.13.3 to maintain compatibility with the API and asynchronous packages.
+```
 
-Bash
+**2. Configure the Virtual Environment**
+
+This project requires Python 3.13.3 to maintain compatibility with the API and asynchronous packages.
+```bash
 python -m venv .venv
 source .venv/Scripts/activate
 pip install -r requirements.txt
-3. Environment Variables
-Create a .env file in the root directory. Never commit this file to version control.
+```
 
+**3. Environment Variables**
+Create a .env file in the root directory. Never commit this file to version control.
+```bash
 Ini, TOML
 REPLICATE_API_TOKEN="your_token_here"
 DB_HOST="127.0.0.1"
 DB_USER="your_db_user"
 DB_PASSWORD="your_db_password"
 DB_NAME="ai_chat_db"
-4. Initialize the Database
+```
+
+**4. Initialize the Database**
+
 Import the database schema into your local MySQL instance.
 
-Bash
+```bash
 mysql -u your_db_user -p ai_chat_db < "final dump.txt"
-5. Run the Server
-Ensure Ollama is running Qwen 2.5 14B locally, then start the FastAPI server.
+```
 
-Bash
+**5. Run the Server**
+
+Ensure Ollama is running Qwen 2.5 14B locally, then start the FastAPI server.
+```bash
 python server.py
+```
 Author: Blake Mitchell
