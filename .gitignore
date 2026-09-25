@@ -1,0 +1,12 @@
+# Environments
+.env
+.venv/
+
+# Cache
+__pycache__/
+
+# Testing/Trash
+devtrash/
+
+# Dynamic TTS Audio files
+static/audio/
