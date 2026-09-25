@@ -585,19 +585,26 @@ def handle_chat(request_data: ChatRequest, request: Request):
                 update_message_audio_in_db(new_msg_id, local_url_1, local_url_2)
                 
                 yield f"data: {json.dumps({'type': 'audio', 'audio_url': local_url_1, 'audio_url_2': local_url_2})}\n\n"
+            
+            # Send done signal on normal stream completion
+            yield f"data: {json.dumps({'type': 'done'})}\n\n"
+
         except GeneratorExit:
             # Client disconnected/refreshed — save generated text without yielding
             print("[SYSTEM]: Client disconnected mid-stream.")
             if full_text.strip() and new_msg_id is None:
-                save_message(conv_id, "assistant", full_text, None, None)
+                new_msg_id = save_message(conv_id, "assistant", full_text, None, None)
+            return
+
         except Exception as stream_err:
             print(f"[SYSTEM ERROR]: Ollama streaming error: {stream_err}")
             yield f"data: {json.dumps({'type': 'error', 'detail': str(stream_err)})}\n\n"
             yield f"data: {json.dumps({'type': 'done'})}\n\n"
+
         finally:
+            # Perform non-yielding database cleanup only
             if full_text.strip() and new_msg_id is None:
                 save_message(conv_id, "assistant", full_text, None, None)
-            yield f"data: {json.dumps({'type': 'done'})}\n\n"
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 
 @app.get("/api/warmup")
