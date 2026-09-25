@@ -19,6 +19,9 @@ import ollama
 from ddgs import DDGS
 import replicate
 from dotenv import load_dotenv
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 
 # Load Environment Variables
 env_path = Path(__file__).resolve().parent / ".env"
@@ -27,13 +30,19 @@ load_dotenv(dotenv_path=env_path, override=True)
 AUDIO_DIR = Path(__file__).resolve().parent / "static" / "audio"
 AUDIO_DIR.mkdir(parents=True, exist_ok=True)
 
+
 MODEL_NAME = "qwen2.5:14b"
-TOGGLE_PHRASE = "i love joe biden"
+TOGGLE_PHRASE = os.getenv("SECRET_PHRASE")
 LOCAL_SPEAKER_PATH = "trump_ref_2.wav"
 LOCAL_TEXT_PATH = "trump_ref_2.txt"
 API_TOKEN = os.getenv("REPLICATE_API_TOKEN")
 
 replicate_client = replicate.Client(api_token=API_TOKEN)
+limiter = Limiter(key_func=get_remote_address)
+
+app = FastAPI()
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 is_production = os.getenv("ENVIRONMENT") == "production"
 # Initialize Connection Pool
@@ -354,6 +363,7 @@ def check_auth(request: Request):
     return {"status": "authenticated", "user_id": user_id}
 
 @app.post("/api/auth/login")
+@limiter.limit("5/minute")
 def login(req: AuthRequestModel, response: Response):
     conn = get_db_connection()
     try:
@@ -512,6 +522,7 @@ def delete_chat(conversation_id: int, request: Request):
         conn.close()
 
 @app.post("/api/chat")
+@limiter.limit("15/minute")
 def handle_chat(request_data: ChatRequest, request: Request):
     user_id = get_current_user(request)
     conv_id = request_data.conversation_id

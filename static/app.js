@@ -151,7 +151,7 @@ function closeSidebarOnMobile() {
 
 async function refreshSidebar() {
     const res = await fetch('/api/conversations');
-    if (!res.ok) return promptLogout(); // if unauthorized, just prompt logout or handle natively
+    if (!res.ok) return promptLogout();
 
     const convs = await res.json();
     const list = document.getElementById('conversation-list');
@@ -160,18 +160,37 @@ async function refreshSidebar() {
     convs.forEach(c => {
         const li = document.createElement('li');
         li.className = `conv-item ${c.id === currentConvId ? 'active' : ''}`;
-        
-        // Strictly injecting the three vertical dots (⋮), no gear icon
-        li.innerHTML = `
-            <span class="conv-title" onclick="loadConversation(${c.id}, '${c.title.replace(/'/g, "\\'")}')">
-                ${c.title || `Chat #${c.id}`}
-            </span>
-            <button class="dots-btn" onclick="toggleMenu(event, ${c.id})">⋮</button>
-            <div id="menu-${c.id}" class="context-menu">
-                <div onclick="renameChat(${c.id}, '${c.title.replace(/'/g, "\\'")}')">✏️ Rename</div>
-                <div class="danger" onclick="deleteChat(${c.id})">🗑️ Delete</div>
-            </div>
-        `;
+
+        const titleSpan = document.createElement('span');
+        titleSpan.className = 'conv-title';
+        titleSpan.textContent = c.title || `Chat #${c.id}`;
+        titleSpan.onclick = () => loadConversation(c.id, c.title);
+
+        const dotsBtn = document.createElement('button');
+        dotsBtn.className = 'dots-btn';
+        dotsBtn.textContent = '⋮';
+        dotsBtn.onclick = (e) => toggleMenu(e, c.id);
+
+        const menuDiv = document.createElement('div');
+        menuDiv.id = `menu-${c.id}`;
+        menuDiv.className = 'context-menu';
+
+        const renameDiv = document.createElement('div');
+        renameDiv.textContent = '✏️ Rename';
+        renameDiv.onclick = () => renameChat(c.id, c.title);
+
+        const deleteDiv = document.createElement('div');
+        deleteDiv.className = 'danger';
+        deleteDiv.textContent = '🗑️ Delete';
+        deleteDiv.onclick = () => deleteChat(c.id);
+
+        menuDiv.appendChild(renameDiv);
+        menuDiv.appendChild(deleteDiv);
+
+        li.appendChild(titleSpan);
+        li.appendChild(dotsBtn);
+        li.appendChild(menuDiv);
+
         list.appendChild(li);
     });
 }
